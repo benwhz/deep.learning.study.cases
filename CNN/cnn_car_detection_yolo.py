@@ -9,6 +9,7 @@ import pandas as pd
 import PIL
 import tensorflow as tf
 #from keras import backend as K
+from keras import models
 from keras.layers import Input, Lambda, Conv2D
 from keras.models import load_model, Model
 from yolo_utils import read_classes, read_anchors, generate_colors, preprocess_image, draw_boxes, scale_boxes
@@ -82,6 +83,7 @@ def yolo_filter_boxes(box_confidence, boxes, box_class_probs, threshold = .6):
     
     return scores, boxes, classes
 
+'''
 box_confidence = tf.random.normal([19, 19, 5, 1], mean=1, stddev=4, seed = 1)
 boxes = tf.random.normal([19, 19, 5, 4], mean=1, stddev=4, seed = 1)
 box_class_probs = tf.random.normal([19, 19, 5, 80], mean=1, stddev=4, seed = 1)
@@ -94,6 +96,7 @@ print("classes[2] = ", classes[2])
 print("scores.shape = ", scores.shape)
 print("boxes.shape = ", boxes.shape)
 print("classes.shape = ", classes.shape)
+'''
 
 def iou(box1, box2):
     """Implement the intersection over union (IoU) between box1 and box2
@@ -133,6 +136,7 @@ def iou(box1, box2):
     
     return iou
 
+'''
 ## Test case 1: boxes intersect
 box1 = (2, 1, 4, 3)
 box2 = (1, 2, 3, 4) 
@@ -152,6 +156,7 @@ print("iou for boxes that only touch at vertices = " + str(iou(box1,box2)))
 box1 = (1,1,3,3)
 box2 = (2,3,3,4)
 print("iou for boxes that only touch at edges = " + str(iou(box1,box2)))
+'''
 
 def yolo_non_max_suppression(scores, boxes, classes, max_boxes = 10, iou_threshold = 0.5):
     """
@@ -190,6 +195,7 @@ def yolo_non_max_suppression(scores, boxes, classes, max_boxes = 10, iou_thresho
     
     return scores, boxes, classes
 
+'''
 scores = tf.random.normal([54,], mean=1, stddev=4, seed = 1)
 boxes = tf.random.normal([54, 4], mean=1, stddev=4, seed = 1)
 classes = tf.random.normal([54,], mean=1, stddev=4, seed = 1)
@@ -200,3 +206,69 @@ print("classes[2] = ",classes[2])
 print("scores.shape = ",scores.shape)
 print("boxes.shape = ",boxes.shape)
 print("classes.shape = ",classes.shape)
+'''
+
+def yolo_eval(yolo_outputs, image_shape = (720., 1280.), max_boxes=10, score_threshold=.6, iou_threshold=.5):
+    """
+    Converts the output of YOLO encoding (a lot of boxes) to your predicted boxes along with their scores, box coordinates and classes.
+    
+    Arguments:
+    yolo_outputs -- output of the encoding model (for image_shape of (608, 608, 3)), contains 4 tensors:
+                    box_confidence: tensor of shape (None, 19, 19, 5, 1)
+                    box_xy: tensor of shape (None, 19, 19, 5, 2)
+                    box_wh: tensor of shape (None, 19, 19, 5, 2)
+                    box_class_probs: tensor of shape (None, 19, 19, 5, 80)
+    image_shape -- tensor of shape (2,) containing the input shape, in this notebook we use (608., 608.) (has to be float32 dtype)
+    max_boxes -- integer, maximum number of predicted boxes you'd like
+    score_threshold -- real value, if [ highest class probability score < threshold], then get rid of the corresponding box
+    iou_threshold -- real value, "intersection over union" threshold used for NMS filtering
+    
+    Returns:
+    scores -- tensor of shape (None, ), predicted score for each box
+    boxes -- tensor of shape (None, 4), predicted box coordinates
+    classes -- tensor of shape (None,), predicted class for each box
+    """
+    
+    ### START CODE HERE ### 
+    
+    # Retrieve outputs of the YOLO model (≈1 line)
+    box_confidence, box_xy, box_wh, box_class_probs = yolo_outputs
+
+    # Convert boxes to be ready for filtering functions (convert boxes box_xy and box_wh to corner coordinates)
+    boxes = yolo_boxes_to_corners(box_xy, box_wh)
+
+    # Use one of the functions you've implemented to perform Score-filtering with a threshold of score_threshold (≈1 line)
+    scores, boxes, classes = yolo_filter_boxes(box_confidence, boxes, box_class_probs, score_threshold)
+    
+    # Scale boxes back to original image shape.
+    boxes = scale_boxes(boxes, image_shape)
+
+    # Use one of the functions you've implemented to perform Non-max suppression with 
+    # maximum number of boxes set to max_boxes and a threshold of iou_threshold (≈1 line)
+    scores, boxes, classes = yolo_non_max_suppression(scores, boxes, classes, max_boxes, iou_threshold)
+    
+    ### END CODE HERE ###
+    
+    return scores, boxes, classes
+
+'''
+yolo_outputs = (tf.random.normal([19, 19, 5, 1], mean=1, stddev=4, seed = 1),
+                tf.random.normal([19, 19, 5, 2], mean=1, stddev=4, seed = 1),
+                tf.random.normal([19, 19, 5, 2], mean=1, stddev=4, seed = 1),
+                tf.random.normal([19, 19, 5, 80], mean=1, stddev=4, seed = 1))
+scores, boxes, classes = yolo_eval(yolo_outputs)
+print("scores[2] = ", scores[2])
+print("boxes[2] = ", boxes[2])
+print("classes[2] = ", classes[2])
+print("scores.shape = ", scores.shape)
+print("boxes.shape = ", boxes.shape)
+print("classes.shape = ", classes.shape)
+'''
+
+class_names = read_classes("model_data/coco_classes.txt")
+anchors = read_anchors("model_data/yolo_anchors.txt")
+image_shape = (720., 1280.)
+
+yolo_model = models.load_model("model_data/yolo.h5")
+
+yolo_model.summary()

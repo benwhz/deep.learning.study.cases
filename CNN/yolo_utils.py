@@ -2,7 +2,9 @@ import colorsys
 import imghdr
 import os
 import random
+
 from keras import backend as K
+import tensorflow as tf
 
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
@@ -33,8 +35,10 @@ def scale_boxes(boxes, image_shape):
     """ Scales the predicted boxes in order to be drawable on the image"""
     height = image_shape[0]
     width = image_shape[1]
-    image_dims = K.stack([height, width, height, width])
-    image_dims = K.reshape(image_dims, [1, 4])
+    
+    image_dims = tf.keras.backend.stack([height, width, height, width])
+    image_dims = tf.keras.backend.reshape(image_dims, [1, 4])
+    
     boxes = boxes * image_dims
     return boxes
 

@@ -161,3 +161,13 @@ cython_debug/
 
 datasets
 /models
+weights
+data
+faces
+images
+output
+model_data
+*.pth
+*.png
+*.keras
+
