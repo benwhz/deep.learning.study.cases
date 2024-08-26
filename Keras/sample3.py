@@ -24,7 +24,7 @@ outputs = layers.Dense(10)(x)
 
 model = keras.Model(inputs, outputs, name="toy_resnet")
 model.summary()
-keras.utils.plot_model(model, "mini_resnet.png", show_shapes=True)
+keras.utils.plot_model(model, "./output/mini_resnet.png", show_shapes=True)
 
 (x_train, y_train), (x_test, y_test) = keras.datasets.cifar10.load_data()
 

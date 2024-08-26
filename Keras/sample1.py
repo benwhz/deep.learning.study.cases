@@ -23,7 +23,7 @@ y = model(tf.ones((1, 784)))
 print(y)
 
 
-keras.utils.plot_model(model, "my_first_model.png", show_shapes=True)
+keras.utils.plot_model(model, "./output/my_first_model.png", show_shapes=True)
 
 (x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
 
@@ -42,10 +42,10 @@ test_scores = model.evaluate(x_test, y_test, verbose=2)
 print("Test loss:", test_scores[0])
 print("Test accuracy:", test_scores[1])
 
-model.save("my_model.keras")
+model.save("./model/my_model.keras")
 del model
 # Recreate the exact same model purely from the file:
-model = keras.models.load_model("my_model.keras")
+model = keras.models.load_model("./model/my_model.keras")
 
 test_scores = model.evaluate(x_test, y_test, verbose=2)
 print("Test loss:", test_scores[0])
@@ -79,7 +79,7 @@ encoded_img = encoder(autoencoder_input)
 decoded_img = decoder(encoded_img)
 autoencoder = keras.Model(autoencoder_input, decoded_img, name="autoencoder")
 autoencoder.summary()
-keras.utils.plot_model(autoencoder, "autoencoder.png", show_shapes=True)
+keras.utils.plot_model(autoencoder, "./output/autoencoder.png", show_shapes=True)
 
 print(100*'-')
 def get_model():
@@ -99,4 +99,4 @@ outputs = layers.average([y1, y2, y3])
 ensemble_model = keras.Model(inputs=inputs, outputs=outputs)
 ensemble_model.summary()
 
-keras.utils.plot_model(ensemble_model, "ensemble_model.png", show_shapes=True)
+keras.utils.plot_model(ensemble_model, "./output/ensemble_model.png", show_shapes=True)

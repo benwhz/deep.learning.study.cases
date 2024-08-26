@@ -160,13 +160,16 @@ cython_debug/
 #.idea/
 
 datasets
-/models
+/model
 weights
 data
 faces
 images
 output
 model_data
+logs
+runs
+
 *.pth
 *.png
 *.keras

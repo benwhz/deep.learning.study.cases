@@ -46,7 +46,7 @@ feature_extractor = keras.Model(
 )
 
 model.summary()
-keras.utils.plot_model(model, "multi_input_and_output_model.png", show_shapes=True)
+keras.utils.plot_model(model, "./output/multi_input_and_output_model.png", show_shapes=True)
 
 model.compile(
     optimizer=keras.optimizers.RMSprop(1e-3),
