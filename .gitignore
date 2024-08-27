@@ -161,6 +161,7 @@ cython_debug/
 
 datasets
 /model
+models
 weights
 data
 faces
