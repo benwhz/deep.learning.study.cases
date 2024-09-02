@@ -7516,9 +7516,8 @@ a.anchor-link {
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="Loss">Loss<a class="anchor-link" href="#Loss">¶</a></h2><h3 id="BinaryCrossentropy-/-BinaryFocalCrossentropy">BinaryCrossentropy / BinaryFocalCrossentropy<a class="anchor-link" href="#BinaryCrossentropy-/-BinaryFocalCrossentropy">¶</a></h3><ul>
-<li>用于二元分类</li>
-<li>默认from_logits=False，我们假设 y_pred 是概率（即 [0, 1] 中的值）。否则将 y_pred 解释为 logit 值的张量。</li>
+<h2 id="4-Loss">4 Loss<a class="anchor-link" href="#4-Loss">¶</a></h2><h2 id="4.1-MSE">4.1 MSE<a class="anchor-link" href="#4.1-MSE">¶</a></h2><ul>
+<li>用于数值回归</li>
 </ul>
 </div>
 </div>
@@ -7533,25 +7532,173 @@ a.anchor-link {
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">keras</span>
 <span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">torch.nn</span> <span class="k">as</span> <span class="nn">nn</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
-<span class="c1"># from logits = True</span>
-<span class="n">y_true</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
-<span class="n">y_pred</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mf">18.6</span><span class="p">,</span> <span class="mf">0.51</span><span class="p">,</span> <span class="mf">2.94</span><span class="p">,</span> <span class="o">-</span><span class="mf">12.8</span><span class="p">]</span>
+<span class="c1"># keras</span>
+<span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="c1">#y_true = np.random.randint(0, 2, size=(2, 3))</span>
+<span class="c1">#y_pred = np.random.random(size=(2, 3))</span>
+<span class="n">y_true</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">]]</span>
+
+<span class="n">y_pred</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">6</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">4</span><span class="p">]]</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">)</span>
+
+<span class="n">loss</span> <span class="o">=</span> <span class="n">keras</span><span class="o">.</span><span class="n">losses</span><span class="o">.</span><span class="n">mean_squared_error</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">loss</span><span class="p">)</span>
+
+<span class="n">ll</span> <span class="o">=</span> <span class="n">keras</span><span class="o">.</span><span class="n">losses</span><span class="o">.</span><span class="n">MeanSquaredError</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">ll</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">constant</span><span class="p">(</span><span class="n">y_pred</span><span class="p">),</span> <span class="n">tf</span><span class="o">.</span><span class="n">constant</span><span class="p">(</span><span class="n">y_true</span><span class="p">)))</span>
+
+<span class="c1"># torch</span>
+<span class="n">y_true</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+<span class="n">y_pred</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">y_pred</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+
+<span class="n">loss</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">functional</span><span class="o">.</span><span class="n">mse_loss</span><span class="p">(</span><span class="n">y_pred</span><span class="p">,</span> <span class="n">y_true</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">loss</span><span class="p">)</span>
+
+<span class="n">loss</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">MSELoss</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">loss</span><span class="p">(</span><span class="n">y_pred</span><span class="p">,</span> <span class="n">y_true</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>[[1, 2, 3], [4, 5, 6]] [[1, 2, 3], [6, 5, 4]]
+tf.Tensor([0.        2.6666667], shape=(2,), dtype=float32)
+tf.Tensor(1.3333334, shape=(), dtype=float32)
+tensor(1.3333)
+tensor(1.3333)
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h3 id="4.2-%E4%BA%8C%E5%85%83%E4%BA%A4%E5%8F%89%E7%86%B5%E6%8D%9F%E5%A4%B1%E5%87%BD%E6%95%B0">4.2 二元交叉熵损失函数<a class="anchor-link" href="#4.2-%E4%BA%8C%E5%85%83%E4%BA%A4%E5%8F%89%E7%86%B5%E6%8D%9F%E5%A4%B1%E5%87%BD%E6%95%B0">¶</a></h3><ul>
+<li>用于二元分类</li>
+<li>默认from_logits=False，我们假设 y_pred 是概率（即 [0, 1] 中的值）。否则将 y_pred 解释为 logit 值的张量。</li>
+<li>Keras:<ul>
+<li>BinaryCrossentropy</li>
+<li>BinaryFocalCrossentropy</li>
+</ul>
+</li>
+<li>Pytorch:<ul>
+<li>BCELoss</li>
+<li>BCEWithLogitsLoss<ul>
+<li>Input: (∗), where ∗ means any number of dimensions.</li>
+<li>Target: (∗), same shape as the input.</li>
+<li>Output: scalar. If reduction is 'none', then (∗), same shape as input.</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># from logits = True</span>
+<span class="n">y_true</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]]</span>
+<span class="n">y_pred</span> <span class="o">=</span> <span class="p">[[</span><span class="o">-</span><span class="mf">18.6</span><span class="p">,</span> <span class="mf">0.51</span><span class="p">,</span> <span class="mf">2.94</span><span class="p">,</span> <span class="o">-</span><span class="mf">12.8</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mf">18.6</span><span class="p">,</span> <span class="mf">0.51</span><span class="p">,</span> <span class="mf">2.94</span><span class="p">,</span> <span class="o">-</span><span class="mf">12.8</span><span class="p">]]</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">y_pred</span><span class="p">))</span>
+
+<span class="n">bce</span> <span class="o">=</span> <span class="n">keras</span><span class="o">.</span><span class="n">losses</span><span class="o">.</span><span class="n">BinaryCrossentropy</span><span class="p">(</span><span class="n">from_logits</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">reduction</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<span class="c1">#print(tf.constant(y_pred), tf.constant(y_true))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">bce</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">constant</span><span class="p">(</span><span class="n">y_pred</span><span class="p">),</span> <span class="n">tf</span><span class="o">.</span><span class="n">constant</span><span class="p">(</span><span class="n">y_true</span><span class="p">)))</span>
 
 <span class="n">l</span> <span class="o">=</span> <span class="n">keras</span><span class="o">.</span><span class="n">losses</span><span class="o">.</span><span class="n">binary_crossentropy</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">from_logits</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">l</span><span class="p">)</span>
-<span class="n">l</span> <span class="o">=</span> <span class="n">keras</span><span class="o">.</span><span class="n">losses</span><span class="o">.</span><span class="n">binary_focal_crossentropy</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">from_logits</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">l</span><span class="p">)</span>
+<span class="c1">#l = keras.losses.binary_focal_crossentropy(y_true, y_pred, from_logits=True)</span>
+<span class="c1">#print(l)</span>
 
 <span class="c1"># from logits = False</span>
-<span class="n">y_true</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]]</span>
-<span class="n">y_pred</span> <span class="o">=</span> <span class="p">[[</span><span class="mf">0.06</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">]]</span>
+<span class="n">y_true</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]]</span>
+<span class="n">y_pred</span> <span class="o">=</span> <span class="p">[[</span><span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">]]</span>      <span class="c1"># probabilities [0~1]</span>
+<span class="n">y_pred_l</span> <span class="o">=</span> <span class="p">[[</span><span class="o">-</span><span class="mf">6.0</span><span class="p">,</span> <span class="mf">14.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">4.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">]]</span>   <span class="c1"># logits, calculated values.</span>
 <span class="n">loss</span> <span class="o">=</span> <span class="n">keras</span><span class="o">.</span><span class="n">losses</span><span class="o">.</span><span class="n">binary_crossentropy</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">)</span>
 <span class="k">assert</span> <span class="n">loss</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="mi">2</span><span class="p">,)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">loss</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">'-&gt;'</span><span class="p">,</span> <span class="n">loss</span><span class="p">,</span> <span class="n">tf</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">reduce_mean</span><span class="p">(</span><span class="n">loss</span><span class="p">))</span>
+<span class="n">loss</span> <span class="o">=</span> <span class="n">keras</span><span class="o">.</span><span class="n">losses</span><span class="o">.</span><span class="n">binary_crossentropy</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred_l</span><span class="p">,</span> <span class="n">from_logits</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">loss</span><span class="p">,</span> <span class="n">tf</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">reduce_mean</span><span class="p">(</span><span class="n">loss</span><span class="p">))</span>
 
 <span class="n">loss</span> <span class="o">=</span> <span class="n">keras</span><span class="o">.</span><span class="n">losses</span><span class="o">.</span><span class="n">binary_focal_crossentropy</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">)</span>
 <span class="k">assert</span> <span class="n">loss</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="mi">2</span><span class="p">,)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">loss</span><span class="p">)</span>
+<span class="n">loss</span> <span class="o">=</span> <span class="n">keras</span><span class="o">.</span><span class="n">losses</span><span class="o">.</span><span class="n">binary_focal_crossentropy</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred_l</span><span class="p">,</span> <span class="n">from_logits</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">loss</span><span class="p">)</span>
+
+<span class="c1"># torch loss BCE, reduction = 'mean'</span>
+<span class="n">tbce</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">BCELoss</span><span class="p">()</span>
+<span class="n">tbcel</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">BCEWithLogitsLoss</span><span class="p">()</span>
+
+<span class="n">l</span> <span class="o">=</span> <span class="n">tbce</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">y_pred</span><span class="p">),</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">l</span><span class="p">)</span>
+<span class="n">l</span> <span class="o">=</span> <span class="n">tbcel</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">y_pred_l</span><span class="p">),</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">l</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>tf.Tensor(
+[[8.3583895e-09 6.2480646e-01 9.4978875e-01 2.7607641e-06]
+ [8.3583895e-09 6.2480646e-01 9.4978875e-01 2.7607641e-06]], shape=(2, 4), dtype=float32)
+tf.Tensor([0.7206758 0.7206758], shape=(2,), dtype=float32)
+tf.Tensor([0.865458 0.865458], shape=(2,), dtype=float32)
+-&gt; tf.Tensor([0.91629076 0.6931472 ], shape=(2,), dtype=float32) tf.Tensor(0.804719, shape=(), dtype=float32)
+tf.Tensor([0.00123826 1.072539  ], shape=(2,), dtype=float32) tf.Tensor(0.5368886, shape=(), dtype=float32)
+tf.Tensor([0.32986468 0.1732868 ], shape=(2,), dtype=float32)
+tf.Tensor([7.5681008e-09 8.2504207e-01], shape=(2,), dtype=float32)
+tensor(0.8047)
+tensor(0.5369)
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">y_true</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+<span class="n">y_pred</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.13</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.16</span><span class="p">,</span> <span class="mf">0.11</span><span class="p">]</span>
+<span class="c1">#print(tf.math.softmax(y_pred))</span>
+<span class="n">loss</span> <span class="o">=</span> <span class="n">keras</span><span class="o">.</span><span class="n">losses</span><span class="o">.</span><span class="n">binary_crossentropy</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">loss</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -7565,10 +7712,7 @@ a.anchor-link {
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>tf.Tensor(0.865458, shape=(), dtype=float32)
-tf.Tensor(0.6912122, shape=(), dtype=float32)
-tf.Tensor([0.08361798 0.10536055], shape=(2,), dtype=float32)
-tf.Tensor([0.00063818 0.00105361], shape=(2,), dtype=float32)
+<pre>tf.Tensor(0.23524371, shape=(), dtype=float32)
 </pre>
 </div>
 </div>
@@ -7581,7 +7725,8 @@ tf.Tensor([0.00063818 0.00105361], shape=(2,), dtype=float32)
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="CategoricalCrossentropy-/-CategoricalFocalCrossentropy">CategoricalCrossentropy / CategoricalFocalCrossentropy<a class="anchor-link" href="#CategoricalCrossentropy-/-CategoricalFocalCrossentropy">¶</a></h3><ul>
+<h3 id="4.2-%E5%88%86%E7%B1%BB%E4%BA%A4%E5%8F%89%E7%86%B5%E6%8D%9F%E5%A4%B1%E5%87%BD%E6%95%B0">4.2 分类交叉熵损失函数<a class="anchor-link" href="#4.2-%E5%88%86%E7%B1%BB%E4%BA%A4%E5%8F%89%E7%86%B5%E6%8D%9F%E5%A4%B1%E5%87%BD%E6%95%B0">¶</a></h3><p>CategoricalCrossentropy / CategoricalFocalCrossentropy</p>
+<ul>
 <li>用于大于二的分类</li>
 <li>默认from_logits=False，我们假设 y_pred 是概率（即 [0, 1] 中的值）。否则将 y_pred 解释为 logit 值的张量。</li>
 <li>标签以 one_hot 表示形式提供</li>
@@ -7632,7 +7777,8 @@ tf.Tensor(0.23315276, shape=(), dtype=float32)
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="SparseCategoricalCrossentropy">SparseCategoricalCrossentropy<a class="anchor-link" href="#SparseCategoricalCrossentropy">¶</a></h3><ul>
+<h3 id="4.3-%E5%88%86%E7%B1%BB%E4%BA%A4%E5%8F%89%E7%86%B5%E6%8D%9F%E5%A4%B1%E5%87%BD%E6%95%B0">4.3 分类交叉熵损失函数<a class="anchor-link" href="#4.3-%E5%88%86%E7%B1%BB%E4%BA%A4%E5%8F%89%E7%86%B5%E6%8D%9F%E5%A4%B1%E5%87%BD%E6%95%B0">¶</a></h3><p>SparseCategoricalCrossentropy</p>
+<ul>
 <li>用于大于二的分类</li>
 <li>默认from_logits=False，我们假设 y_pred 是概率（即 [0, 1] 中的值）。否则将 y_pred 解释为 logit 值的张量。</li>
 <li>标签以整数形式提供</li>
@@ -7640,7 +7786,7 @@ tf.Tensor(0.23315276, shape=(), dtype=float32)
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7654,7 +7800,25 @@ tf.Tensor(0.23315276, shape=(), dtype=float32)
 <span class="n">scce</span> <span class="o">=</span> <span class="n">keras</span><span class="o">.</span><span class="n">losses</span><span class="o">.</span><span class="n">SparseCategoricalCrossentropy</span><span class="p">()</span>
 <span class="n">_cce2</span> <span class="o">=</span> <span class="n">scce</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">)</span>
 <span class="k">assert</span> <span class="n">_cce1</span> <span class="o">==</span> <span class="n">_cce2</span>
+
+<span class="c1"># torch</span>
+<span class="n">loss</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">CrossEntropyLoss</span><span class="p">()</span>
+<span class="n">l</span> <span class="o">=</span> <span class="n">loss</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([[</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">]]),</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">l</span><span class="p">)</span>
 </pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>tensor(0.9869)
+</pre>
 </div>
 </div>
 </div>

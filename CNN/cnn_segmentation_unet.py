@@ -24,8 +24,8 @@ import matplotlib.pyplot as plt
 
 
 path = ''
-image_path = os.path.join(path, 'datasets/data/CameraRGB/')
-mask_path = os.path.join(path, 'datasets/data/CameraSeg/')
+image_path = os.path.join(path, 'data/data/CameraRGB/')
+mask_path = os.path.join(path, 'data/data/CameraSeg/')
 image_list = os.listdir(image_path)
 mask_list = os.listdir(mask_path)
 image_list = [image_path+i for i in image_list]
@@ -36,7 +36,12 @@ img = imageio.imread(image_list[N])
 mask = imageio.imread(mask_list[N])
 #mask = np.array([max(mask[i, j]) for i in range(mask.shape[0]) for j in range(mask.shape[1])]).reshape(img.shape[0], img.shape[1])
 _mask = np.delete(mask, 3, axis = -1)
+
+#mask data is a integer, from: 0 ~ 22 (total 23 classes)
 print(img[0:10,12:20,:], np.max(_mask))
+
+print(_mask.shape)
+print(_mask[:, 250])
 
 fig, arr = plt.subplots(1, 2, figsize=(14, 10))
 arr[0].imshow(img)
@@ -44,6 +49,7 @@ arr[0].set_title('Image')
 arr[1].imshow(mask[:, :, 0])
 arr[1].set_title('Segmentation')
 plt.show()
+
 
 #image_list_ds = tf.data.Dataset.list_files(image_list, shuffle=False)
 #mask_list_ds = tf.data.Dataset.list_files(mask_list, shuffle=False)
@@ -75,10 +81,10 @@ def process_path(image_path, mask_path):
 
     mask = tf.io.read_file(mask_path)
     mask = tf.image.decode_png(mask, channels=3)
-    print(mask)
+    print(mask.shape)
+    # mask shape from (w, h, 3) => (w, h, 1) 
     mask = tf.math.reduce_max(mask, axis=-1, keepdims=True)
-    print(type(mask))
-    
+    print(mask.shape)
     return img, mask
 
 def preprocess(image, mask):
@@ -323,7 +329,7 @@ train_dataset = processed_image_ds.cache().shuffle(BUFFER_SIZE).batch(BATCH_SIZE
 
 print(processed_image_ds.element_spec)
 model_history = unet.fit(train_dataset, epochs=EPOCHS)
-unet.save("models/segunet.keras")
+unet.save("model/segunet.keras")
 
 def create_mask(pred_mask):
     pred_mask = tf.argmax(pred_mask, axis=-1)

@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 def preprocess_images():
     num_skipped = 0
     for folder_name in ("Cat", "Dog"):
-        folder_path = os.path.join("./datasets/PetImages", folder_name)
+        folder_path = os.path.join("./data/PetImages", folder_name)
         for fname in os.listdir(folder_path):
             fpath = os.path.join(folder_path, fname)
             try:
@@ -24,13 +24,13 @@ def preprocess_images():
 
     print(f"Deleted {num_skipped} images.")
 
-#preprocess_images()
+preprocess_images()
 
 image_size = (180, 180)
 batch_size = 128
 
 train_ds, val_ds = keras.utils.image_dataset_from_directory(
-    "./datasets/PetImages",
+    "./data/PetImages",
     validation_split=0.2,
     subset="both",
     seed=1337,
@@ -38,12 +38,11 @@ train_ds, val_ds = keras.utils.image_dataset_from_directory(
     batch_size=batch_size,
 )
 
-print(train_ds)
-
 plt.figure(figsize=(10, 10))
 # takes one batch?
 for images, labels in train_ds.take(1):
     for i in range(9):
+        #print(labels[i])
         ax = plt.subplot(3, 3, i + 1)
         plt.imshow(np.array(images[i]).astype("uint8"))
         plt.title(int(labels[i]))
@@ -81,9 +80,8 @@ train_ds = train_ds.map(
 train_ds = train_ds.prefetch(tf_data.AUTOTUNE)
 val_ds = val_ds.prefetch(tf_data.AUTOTUNE)
 
+# Xception Model
 def make_model(input_shape, num_classes):
-    print(input_shape)
-    exit()
     inputs = keras.Input(shape=input_shape)
 
     # Entry block
@@ -127,13 +125,25 @@ def make_model(input_shape, num_classes):
     outputs = layers.Dense(units, activation=None)(x)
     return keras.Model(inputs, outputs)
 
-
+# simple Xception ?
 model = make_model(input_shape=image_size + (3,), num_classes=2)
+'''
+model = keras.applications.Xception(
+    include_top=True,
+    weights=None,
+    input_tensor=None,
+    input_shape=image_size + (3,),
+    pooling=None,
+    classes=1,
+    classifier_activation=None,
+    name="xception",
+)
+'''
 model.summary()
-#keras.utils.plot_model(model, show_shapes=True)
 
-exit()
-epochs = 5
+keras.utils.plot_model(model, to_file='xception.png', show_shapes=True)
+
+epochs = 0
 
 callbacks = [
     keras.callbacks.ModelCheckpoint("save_at_{epoch}.keras"),
@@ -143,6 +153,7 @@ model.compile(
     loss=keras.losses.BinaryCrossentropy(from_logits=True),
     metrics=[keras.metrics.BinaryAccuracy(name="acc")],
 )
+
 model.fit(
     train_ds,
     epochs=epochs,
